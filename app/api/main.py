@@ -23,6 +23,20 @@ def health():
         "status": "UP"
     }
 
+@app.get("/ready")
+def ready():
+    try:
+        ollama_client.health_check()
+        return {
+            "status": "READY",
+            "ollama": "UP",
+        }
+    except Exception:
+        return {
+            "status": "NOT_READY",
+            "ollama": "DOWN",
+        }
+
 @app.post("/api/v1/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):
     response = ollama_client.chat(request.message)

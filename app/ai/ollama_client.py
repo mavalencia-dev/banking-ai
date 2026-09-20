@@ -21,6 +21,11 @@ class OllamaClient:
             host=self.host,
         )
 
+    def health_check(self):
+
+        self.client.list()
+
+
     def chat(self, message: str) -> str:
         response = ollama.chat(
             model=self.model,
