@@ -1,24 +1,14 @@
 import ollama
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
+from app.config.settings import settings
+
 
 class OllamaClient:
 
     def __init__(self):
-        self.host=os.getenv(
-            "OLLAMA_HOST",
-            "http://localhost:11434",
-        )
-
-        self.model= os.getenv(
-            "OLLAMA_MODEL",
-            "llama3.2",
-        )
-
-        self.client=ollama.Client(
-            host=self.host,
+        self.model = settings.ollama_model
+        self.client = ollama.Client(
+            host=settings.ollama_host,
         )
 
     def health_check(self):
