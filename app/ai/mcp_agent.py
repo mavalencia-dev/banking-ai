@@ -1,8 +1,10 @@
 import logging
-import re
 
 from app.ai.mcp_client import BankingMCPClient
 from app.ai.ollama_client import OllamaClient
+from app.ai.tool_adapter import (
+    mcp_tools_to_ollama_tools,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -18,95 +20,97 @@ class MCPBankingAgent:
         await self.mcp.connect()
 
         try:
-            tools = await self.mcp.list_tools()
+            mcp_tools = await self.mcp.list_tools()
 
-            tool_descriptions = "\n".join(
-                f"- {tool.name}: {tool.description}"
-                for tool in tools
+            ollama_tools = mcp_tools_to_ollama_tools(
+                mcp_tools
             )
 
-            prompt = f"""
-You are a banking assistant.
-
-You have access to these MCP tools:
-
-{tool_descriptions}
-
-The demo checking account ID is 1.
-The demo savings account ID is 2.
-
-User request:
-{message}
-
-If a tool is required, respond EXACTLY:
-
-TOOL: <tool_name>
-ARGUMENT: <integer>
-
-If no tool is required:
-
-NO_TOOL
-
-Do not invent banking information.
-"""
-
-            decision = self.llm.chat(prompt).strip()
+            messages = [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a banking assistant. "
+                        "Use banking tools when required. "
+                        "Never invent banking data."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": message,
+                },
+            ]
 
             logger.info(
-                "MCP agent decision: %s",
-                decision,
+                "Available MCP tools: %s",
+                [
+                    tool.name
+                    for tool in mcp_tools
+                ],
             )
 
-            if decision == "NO_TOOL":
-                return self.llm.chat(message)
-
-            tool_match = re.search(
-                r"TOOL:\s*(\w+)",
-                decision,
+            response = self.llm.chat(
+                messages=messages,
+                tools=ollama_tools,
             )
 
-            argument_match = re.search(
-                r"ARGUMENT:\s*(\d+)",
-                decision,
+            assistant_message = response["message"]
+
+            logger.info(
+                "LLM response: %s",
+                assistant_message,
             )
 
-            if not tool_match or not argument_match:
-                return (
-                    "I could not determine the "
-                    "required banking operation."
+            tool_calls = assistant_message.get(
+                "tool_calls"
+            )
+
+            if not tool_calls:
+                return assistant_message["content"]
+
+            messages.append(assistant_message)
+
+            for tool_call in tool_calls:
+
+                function = tool_call["function"]
+
+                tool_name = function["name"]
+                arguments = function.get(
+                    "arguments",
+                    {},
                 )
 
-            tool_name = tool_match.group(1)
-            argument = int(argument_match.group(1))
+                logger.info(
+                    "Executing MCP tool: %s arguments=%s",
+                    tool_name,
+                    arguments,
+                )
 
-            result = await self.mcp.call_tool(
-                tool_name,
-                {
-                    "account_id": argument,
-                },
+                logger.info(
+                    "MCP tool call | name=%s | arguments=%s",
+                    tool_name,
+                    arguments,
+                )
+
+                result = await self.mcp.call_tool(
+                    tool_name,
+                    arguments,
+                )
+
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_name": tool_name,
+                        "content": str(result),
+                    }
+                )
+
+            final_response = self.llm.chat(
+                messages=messages,
+                tools=ollama_tools,
             )
 
-            final_prompt = f"""
-You are a banking assistant.
-
-Answer the user's question using ONLY
-the following banking information.
-
-User:
-{message}
-
-Banking information:
-{result}
-
-Rules:
-
-- Do not invent information.
-- Do not expose internal tool names.
-- Be concise.
-- Include currency where appropriate.
-"""
-
-            return self.llm.chat(final_prompt)
+            return final_response["message"]["content"]
 
         finally:
             await self.mcp.close()
