@@ -6,6 +6,7 @@ from app.ai.ollama_client  import OllamaClient
 from app.config.settings import settings
 from app.core.logging import configure_logging
 from app.api.middleware import CorrelationIdMiddleware
+from app.api.routes import accounts, customers
 
 configure_logging()
 
@@ -17,9 +18,13 @@ app = FastAPI(
     version=settings.app_version,
 )
 
+
 app.add_middleware(
     CorrelationIdMiddleware
 )
+
+app.include_router(customers.router)
+app.include_router(accounts.router)
 
 ollama_client = OllamaClient()
 
