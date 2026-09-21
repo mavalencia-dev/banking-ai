@@ -7,6 +7,7 @@ from app.config.settings import settings
 from app.core.logging import configure_logging
 from app.api.middleware import CorrelationIdMiddleware
 from app.api.routes import accounts, customers
+from app.ai.agent import BankingAgent
 
 configure_logging()
 
@@ -27,6 +28,7 @@ app.include_router(customers.router)
 app.include_router(accounts.router)
 
 ollama_client = OllamaClient()
+banking_agent = BankingAgent()
 
 class ChatRequest(BaseModel):
     message: str
@@ -64,7 +66,7 @@ def chat(request: ChatRequest):
         "Chat request received"
     )
 
-    response = ollama_client.chat(request.message)
+    response = banking_agent.run(request.message)
 
     logger.info(
         "Chat response generated"
