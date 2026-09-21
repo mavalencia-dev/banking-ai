@@ -11,6 +11,11 @@ class Settings(BaseSettings):
 
     ollama_model: str = "llama3.2"
 
+    database_url: str = (
+        "postgresql+psycopg://"
+        "banking:banking@localhost:5432/banking"
+    )
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
