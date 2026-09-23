@@ -22,6 +22,23 @@ from app.application.transfer_service import TransferService
 mcp = FastMCP("Banking MCP Server")
 
 @mcp.tool()
+def cancel_transfer(
+    transfer_id: int,
+) -> dict:
+
+    db = SessionLocal()
+
+    try:
+        service = TransferService(db)
+
+        return service.cancel_transfer(
+            transfer_id=transfer_id,
+        )
+
+    finally:
+        db.close()
+
+@mcp.tool()
 def confirm_transfer(
     transfer_id: int,
 ) -> dict:

@@ -7,24 +7,21 @@ async def main():
 
     agent = MCPBankingAgent()
 
-    questions = [
-        "What is my balance?",
-        "Show me my recent transactions.",
-        "What is a bank account?",
-        "What did I spend on restaurants?",
-        "Where am I spending the most money?",
+    print("\n--- STEP 1 ---")
 
-    ]
+    response = await agent.run(
+        "I want to transfer PHP 5000 to Juan."
+    )
 
-    for question in questions:
+    print(response)
 
-        print()
-        print("=" * 60)
-        print(f"USER: {question}")
+    print("\n--- STEP 2 ---")
 
-        response = await agent.run(question)
+    response = await agent.run(
+        "Yes, please confirm the transfer."
+    )
 
-        print(f"AGENT: {response}")
+    print(response)
 
 
 if __name__ == "__main__":

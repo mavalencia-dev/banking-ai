@@ -18,6 +18,49 @@ class TransferService:
     def __init__(self, db: Session):
         self.db = db
 
+    def cancel_transfer(
+        self,
+        transfer_id: int,
+    ) -> dict:
+
+        transfer = self.db.scalar(
+            select(Transfer)
+            .where(Transfer.id == transfer_id)
+            .with_for_update()
+        )
+
+        if transfer is None:
+            return {
+                "success": False,
+                "error": "Transfer not found",
+            }
+
+        if transfer.status == "COMPLETED":
+            return {
+                "success": False,
+                "error": "Completed transfer cannot be cancelled",
+            }
+
+        if transfer.status != "PENDING_CONFIRMATION":
+            return {
+                "success": False,
+                "error": (
+                    f"Transfer cannot be cancelled "
+                    f"from status {transfer.status}"
+                ),
+            }
+
+        transfer.status = "CANCELLED"
+
+        self.db.commit()
+
+        return {
+            "success": True,
+            "transfer_id": transfer.id,
+            "reference": transfer.reference,
+            "status": transfer.status,
+        }
+
     def confirm_transfer(
         self,
         transfer_id: int,
