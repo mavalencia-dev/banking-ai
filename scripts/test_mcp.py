@@ -28,6 +28,20 @@ async def main():
 
         print(result)
 
+        print()
+        print("Calling get_spending_summary...")
+        result = await client.call_tool(
+            "get_spending_summary",
+            {
+                "account_id": 1,
+                "category": "Restaurant",
+            },
+        )
+
+        print(result)
+               
+          
+
     finally:
         await client.close()
 

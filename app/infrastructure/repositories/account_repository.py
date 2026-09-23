@@ -34,3 +34,24 @@ class AccountRepository:
         )
 
         return list(self.db.scalars(statement).all())
+
+    def find_transactions_between(
+        self,
+        account_id: int,
+        start_date,
+        end_date,
+    ) -> list[Transaction]:
+
+        statement = (
+            select(Transaction)
+            .where(
+                Transaction.account_id == account_id,
+                Transaction.created_at >= start_date,
+                Transaction.created_at < end_date,
+            )
+            .order_by(Transaction.created_at.desc())
+        )
+
+        return list(
+            self.db.scalars(statement).all()
+        )   

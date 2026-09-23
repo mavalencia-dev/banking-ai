@@ -11,6 +11,9 @@ async def main():
         "What is my balance?",
         "Show me my recent transactions.",
         "What is a bank account?",
+        "What did I spend on restaurants?",
+         "Where am I spending the most money?",
+
     ]
 
     for question in questions:

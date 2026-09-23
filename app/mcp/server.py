@@ -1,4 +1,5 @@
 from mcp.server.fastmcp import FastMCP
+from datetime import datetime
 
 from app.application.account_service import AccountService
 from app.application.customer_service import CustomerService
@@ -8,6 +9,10 @@ from app.infrastructure.repositories.account_repository import (
 )
 from app.infrastructure.repositories.customer_repository import (
     CustomerRepository,
+)
+
+from app.application.spending_service import (
+    SpendingService,
 )
 
 mcp = FastMCP("Banking MCP Server")
@@ -89,6 +94,50 @@ def get_account_transactions(account_id: int) -> dict:
     finally:
         db.close()
 
+@mcp.tool()
+def get_spending_summary(
+    account_id: int,
+    category: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> dict:
+    """
+    Calculate deterministic spending for an account.
+
+    Dates must be ISO-8601 strings.
+    """
+
+    db = SessionLocal()
+
+    try:
+        repository = AccountRepository(db)
+
+        service = SpendingService(
+            repository
+        )
+
+        parsed_start = (
+            datetime.fromisoformat(start_date)
+            if start_date
+            else None
+        )
+
+        parsed_end = (
+            datetime.fromisoformat(end_date)
+            if end_date
+            else None
+        )
+
+        return service.get_spending_summary(
+            account_id=account_id,
+            category=category,
+            start_date=parsed_start,
+            end_date=parsed_end,
+        )
+
+    finally:
+        db.close()
+
 
 @mcp.tool()
 def get_customer(customer_id: int) -> dict:
@@ -117,6 +166,31 @@ def get_customer(customer_id: int) -> dict:
             "email": customer.email,
             "status": customer.status,
         }
+
+    finally:
+        db.close()
+
+@mcp.tool()
+def get_spending_by_category(
+    account_id: int,
+) -> dict:
+    """
+    Calculate spending grouped by category.
+    """
+
+    db = SessionLocal()
+
+    try:
+
+        repository = AccountRepository(db)
+
+        service = SpendingService(
+            repository
+        )
+
+        return service.get_spending_by_category(
+            account_id
+        )
 
     finally:
         db.close()

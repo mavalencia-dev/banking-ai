@@ -54,6 +54,8 @@ class MCPBankingAgent:
                 tools=ollama_tools,
             )
 
+
+
             assistant_message = response["message"]
 
             logger.info(
@@ -78,12 +80,6 @@ class MCPBankingAgent:
                 arguments = function.get(
                     "arguments",
                     {},
-                )
-
-                logger.info(
-                    "Executing MCP tool: %s arguments=%s",
-                    tool_name,
-                    arguments,
                 )
 
                 logger.info(

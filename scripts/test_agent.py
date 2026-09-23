@@ -8,6 +8,8 @@ def main():
         "What is my account balance?",
         "Show me my account transactions.",
         "What is a bank account?",
+        "Where am I spending the most money?",
+        
     ]
 
     for question in questions:
