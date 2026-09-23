@@ -1,5 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
+from datetime import datetime
+from decimal import Decimal
 
 from sqlalchemy import (
     DateTime,
@@ -197,4 +199,60 @@ class Transaction(Base):
 
     account: Mapped["Account"] = relationship(
         back_populates="transactions"
+    )
+
+class Transfer(Base):
+    __tablename__ = "transfers"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    source_account_id: Mapped[int] = mapped_column(
+        ForeignKey("accounts.id"),
+        nullable=False,
+    )
+
+    destination_account_id: Mapped[int] = mapped_column(
+        ForeignKey("accounts.id"),
+        nullable=False,
+    )
+
+    amount: Mapped[Decimal] = mapped_column(
+        Numeric(19, 4),
+        nullable=False,
+    )
+
+    currency: Mapped[str] = mapped_column(
+        String(3),
+        nullable=False,
+    )
+
+    status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="COMPLETED",
+    )
+
+    reference: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+
+    idempotency_key: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+    )
+
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
     )

@@ -12,7 +12,7 @@ async def main():
         "Show me my recent transactions.",
         "What is a bank account?",
         "What did I spend on restaurants?",
-         "Where am I spending the most money?",
+        "Where am I spending the most money?",
 
     ]
 
