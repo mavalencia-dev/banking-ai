@@ -15,8 +15,51 @@ from app.application.spending_service import (
     SpendingService,
 )
 
+from decimal import Decimal
+
+from app.application.transfer_service import TransferService
+
 mcp = FastMCP("Banking MCP Server")
 
+@mcp.tool()
+def confirm_transfer(
+    transfer_id: int,
+) -> dict:
+
+    db = SessionLocal()
+
+    try:
+        service = TransferService(db)
+
+        return service.confirm_transfer(
+            transfer_id=transfer_id,
+        )
+
+    finally:
+        db.close()
+
+@mcp.tool()
+def prepare_transfer(
+    source_account_id: int,
+    beneficiary_id: int,
+    amount: str,
+    idempotency_key: str,
+) -> dict:
+
+    db = SessionLocal()
+
+    try:
+        service = TransferService(db)
+
+        return service.prepare_transfer(
+            source_account_id=source_account_id,
+            beneficiary_id=beneficiary_id,
+            amount=Decimal(amount),
+            idempotency_key=idempotency_key,
+        )
+
+    finally:
+        db.close()
 
 @mcp.tool()
 def get_account_balance(account_id: int) -> dict:
